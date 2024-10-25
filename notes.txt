@@ -5,14 +5,16 @@ Key Features:
 4. Make a predictive chart for 1 month (top 10) with visualization (matplotlib)
 
 GUI layout:
-1. App title: e.g Scrapiefy + Date
-2. Buttons: Re-Analyze, tabs
+1. App title: e.g SpotiScrape + Date
+2. Buttons: Re-Analyze, tabs, Convert to CSV, Convert to XLSX
 3. tabs: 
     Current Week + Top 10 list, 
     Prediction: Next Week + Top 10 list, 
     Prediction: Next Month + Top 10 list
-4. Settings
-
+4. Settings:  
+    Theme modes,
+    UI Scaling
+    
 Modules/Packages/Libraries used:
 * requests
 * bs4 (BeautifulSoup)
@@ -40,3 +42,5 @@ Resources:
 https://kworb.net/spotify/country/ph_daily.html
 https://kworb.net/spotify/country/ph_weekly.html
 https://github.com/TomSchimansky/CustomTkinter/blob/master/examples/complex_example.py
+
+

@@ -1,27 +1,26 @@
 import customtkinter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import pandas as pd
+import sys
+from test import scrape_kworb_philippines  # Ensure this function is correctly defined
 
-customtkinter.set_appearance_mode("System")  # Modes: "System" (standard), "Dark", "Light"
-customtkinter.set_default_color_theme("green")  # Themes: "blue" (standard), "green", "dark-blue"
+customtkinter.set_appearance_mode("System")
+customtkinter.set_default_color_theme("green")
 
 class App(customtkinter.CTk):
-    def __init__(self):
+    def __init__(self, data):
         super().__init__()
 
         # Configure window
         self.title("SpotiScrape - Spotify Top Charts Philippines")
-        self.geometry(f"{1100}x{580}")
-        self.resizable(False, False) 
-
-        # Prevent fullscreen by overriding the maximize button behavior
-        self.bind("<F11>", self.toggle_fullscreen)
+        self.geometry("1100x580")
+        self.resizable(False, False)
 
         # Configure grid layout
         self.grid_columnconfigure(0, weight=0)  # Sidebar
         self.grid_columnconfigure(1, weight=1)  # Scrollable frame
         self.grid_rowconfigure(0, weight=1)      # For tab view
-        self.grid_rowconfigure(1, weight=0)      # For additional content if needed
 
         # Create sidebar frame with widgets
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
@@ -31,11 +30,11 @@ class App(customtkinter.CTk):
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
         # Create sidebar buttons
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_event, text="Convert to CSV")
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_csv, text="Convert to CSV")
         self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
-        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_event, text="Convert to XLSX")
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_xlsx, text="Convert to XLSX")
         self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
-        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.sidebar_button_event, text="Recalculate Analysis")
+        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.restart_analysis, text="Restart Analysis")
         self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
 
         # Appearance settings
@@ -58,27 +57,20 @@ class App(customtkinter.CTk):
         self.tabview = customtkinter.CTkTabview(self.scrollable_frame, width=250)
         self.tabview.grid(row=0, column=0, sticky="nsew")
 
-        # Configure the tabview to stretch
-        self.scrollable_frame.grid_rowconfigure(0, weight=1)  # Make the tabview stretch vertically
-
         self.tabview.add("Current Week")
         self.tabview.add("Prediction: Next Week")
         self.tabview.add("Prediction: Next Month")
 
         # Create content for each tab
-        self.create_tab_content(self.tabview.tab("Current Week"), "Initial data for Current Week")
-        self.create_tab_content(self.tabview.tab("Prediction: Next Week"), "Initial data for Prediction Next Week")
-        self.create_tab_content(self.tabview.tab("Prediction: Next Month"), "Initial data for Prediction Next Month")
+        self.create_tab_content(self.tabview.tab("Current Week"), data.head(10), "Current Week Data", 'current')
+        self.create_tab_content(self.tabview.tab("Prediction: Next Week"), data.head(10), "Next Week Prediction", 'next')
+        self.create_tab_content(self.tabview.tab("Prediction: Next Month"), data.head(10), "Next Month Prediction", 'month')
 
         # Set default values
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
 
-    def toggle_fullscreen(self, event=None):
-        # This method does nothing, effectively disabling fullscreen
-        pass
-
-    def create_tab_content(self, tab, initial_text=""):
+    def create_tab_content(self, tab, data, initial_text, prediction_type):
         # Create a frame to hold the canvas and textbox
         content_frame = customtkinter.CTkFrame(tab)
         content_frame.grid(row=0, column=0, padx=20, pady=(20, 0), sticky="nsew")
@@ -87,38 +79,73 @@ class App(customtkinter.CTk):
         self.chart_frame = customtkinter.CTkFrame(content_frame)
         self.chart_frame.grid(row=0, column=0, padx=20, pady=(10, 20), sticky="nsew")
 
-        # Example of creating a Matplotlib figure
+        # Create a Matplotlib figure based on the data
         fig, ax = plt.subplots()
-        ax.plot([1, 2, 3], [1, 4, 9])  # Replace this with your actual data
+        if prediction_type == 'current':
+            ax.barh(data['Artist and Title'], data['Streams'], color='skyblue')
+            ax.set_title('Top 10 Songs in the Philippines (Current Week)')
+            predicted_streams_column = False  # No predicted streams in current
+        else:
+            # Create the predicted streams column for next week and month
+            if prediction_type == 'next':
+                data.loc[:, 'Predicted Streams'] = data['Streams'] * 1.10
+            elif prediction_type == 'month':
+                data.loc[:, 'Predicted Streams'] = data['Streams'] * (1.10 ** 4)
+
+            ax.barh(data['Artist and Title'], data['Predicted Streams'], color='lightgreen' if prediction_type == 'next' else 'salmon')
+            ax.set_title(f'Predicted Streams for Top 10 Songs ({prediction_type})')
+            predicted_streams_column = True  # Predicted streams is now available
 
         # Create a FigureCanvasTkAgg to embed the plot in the Tkinter window
         canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)
         canvas.draw()
-        canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")  # Use grid here
-
-        # Create a frame for the textbox and scrollbar
-        textbox_frame = customtkinter.CTkFrame(content_frame)
-        textbox_frame.grid(row=1, column=0, padx=20, pady=(10, 20), sticky="nsew")
-        textbox_frame.grid_rowconfigure(0, weight=1)  # Allow the textbox to expand
-        textbox_frame.grid_columnconfigure(0, weight=1)  # Allow the scrollbar to expand
+        canvas.get_tk_widget().grid(row=0, column=0, sticky="nsew")
 
         # Create a text box within the frame
-        self.textbox = customtkinter.CTkTextbox(textbox_frame, state="normal")
-        self.textbox.grid(row=0, column=0, padx=(0, 5), pady=(0, 0), sticky="nsew")  # Use sticky for expansion
+        self.textbox = customtkinter.CTkTextbox(content_frame, state="normal", font=("Courier New", 10))
+        self.textbox.grid(row=1, column=0, padx=(0, 5), pady=(0, 0), sticky="nsew")
 
-        # Create a scrollbar linked to the textbox
-        self.scrollbar = customtkinter.CTkScrollbar(textbox_frame, orientation="vertical", command=self.textbox.yview)
-        self.scrollbar.grid(row=0, column=1, padx=(5, 0), pady=(0, 0), sticky="ns")  # Sticky for vertical scrollbar
-        self.textbox.configure(yscrollcommand=self.scrollbar.set)  # Link scrollbar to textbox
+        # Set character limit
+        char_limit = 30
 
-        self.textbox.insert("0.0", initial_text)
+        # Format the data for the textbox
+        formatted_text = initial_text + "\n\n"
+        formatted_text += f"{'Pos':<5} {'P+':<5} {'Artist and Title':<{char_limit}} {'Pk':<5} {'Streams':<10} {'7Day':<10} {'Total':<10} {'Predicted':<10}\n"
+        formatted_text += "-" * 80 + "\n"
+
+        for index, row in data.iterrows():
+            artist_title = row['Artist and Title']
+            # Truncate artist and title if it exceeds the character limit
+            if len(artist_title) > char_limit:
+                artist_title = artist_title[:char_limit - 3] + "..."  # Keep space for ellipsis
+            
+            if predicted_streams_column:
+                formatted_text += f"{row['Pos']:<5} {row['P+']:<5} {artist_title:<{char_limit}} {row['Pk']:<5} {row['Streams']:<10} {row['7Day']:<10} {row['Total']:<10} {row['Predicted Streams']:<10.2f}\n"
+            else:
+                formatted_text += f"{row['Pos']:<5} {row['P+']:<5} {artist_title:<{char_limit}} {row['Pk']:<5} {row['Streams']:<10} {row['7Day']:<10} {row['Total']:<10} {'N/A':<10}\n"
+
+        self.textbox.insert("0.0", formatted_text)
         self.textbox.configure(state="disabled")  # Make it read-only
 
-    def update_textbox(self, new_text):
-        self.textbox.configure(state="normal")  # Enable editing to update
-        self.textbox.delete("0.0", "end")  # Clear the text box
-        self.textbox.insert("0.0", new_text)  # Insert new data
-        self.textbox.configure(state="disabled")  # Make it read-only again
+    def sidebar_button_event(self):
+        print("Sidebar button clicked")
+
+    def convert_to_csv(self):
+        # Implement CSV conversion logic here
+        print("Convert to CSV clicked")
+
+    def convert_to_xlsx(self):
+        # Implement XLSX conversion logic here
+        print("Convert to XLSX clicked")
+
+    def restart_analysis(self):
+        # Restart the application
+        print("Restarting analysis...")
+        self.destroy()  # Close the current application window
+        # Restart the application
+        data = scrape_kworb_philippines()  # Fetch new data
+        app = App(data)  # Create a new instance of App
+        app.mainloop()  # Start the new application
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -127,9 +154,7 @@ class App(customtkinter.CTk):
         new_scaling_float = int(new_scaling.replace("%", "")) / 100
         customtkinter.set_widget_scaling(new_scaling_float)
 
-    def sidebar_button_event(self):
-        print("Sidebar button clicked")
-
 if __name__ == "__main__":
-    app = App()
+    data = scrape_kworb_philippines()
+    app = App(data)
     app.mainloop()
