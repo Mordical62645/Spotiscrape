@@ -8,7 +8,7 @@ import os
 import shutil
 from main import scrape_kworb_philippines  # Ensure this function is correctly defined
 from main import get_scraped_date  # Import the function that gets the scraped date
-from main import display_all
+from main import convert_to_csv, convert_to_xlsx
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("green")
@@ -46,9 +46,9 @@ class App(customtkinter.CTk):
         self.date_label.grid(row=1, column=0, padx=20, pady=(0, 10))
 
         # Create sidebar buttons
-        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_csv, text="Convert to CSV")
+        self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.button_convert_to_csv, text="Convert to CSV")
         self.sidebar_button_1.grid(row=2, column=0, padx=20, pady=10)
-        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_xlsx, text="Convert to XLSX")
+        self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.button_convert_to_xlsx, text="Convert to XLSX")
         self.sidebar_button_2.grid(row=3, column=0, padx=20, pady=10)
         self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.refresh_data, text="Refresh Data")
         self.sidebar_button_3.grid(row=4, column=0, padx=20, pady=10)
@@ -173,11 +173,13 @@ class App(customtkinter.CTk):
         self.is_refreshing = False
         self.sidebar_button_3.configure(state="normal")  # Re-enable the button
 
-    def convert_to_csv(self):
-        print("Convert to CSV Clicked")
+    def button_convert_to_csv(self):
+        print("Convert to CSV clicked")
+        convert_to_csv(data) # test
 
-    def convert_to_xlsx(self):
-        print("Convert to XLSX Clicked")
+    def button_convert_to_xlsx(self):
+        print("Convert to XLSX clicked")
+        convert_to_xlsx(data) # test
 
     def change_appearance_mode_event(self, new_appearance_mode):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -206,3 +208,4 @@ if __name__ == "__main__":
         app.mainloop()
     else:
         print("No data to display.")
+
