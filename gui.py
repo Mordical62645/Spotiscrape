@@ -1,4 +1,3 @@
-# gui_test.py
 import customtkinter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -6,9 +5,9 @@ import pandas as pd
 import sys
 import os
 import shutil
-from main import scrape_kworb_philippines  # Ensure this function is correctly defined
-from main import get_scraped_date  # Import the function that gets the scraped date
-from main import convert_to_csv, convert_to_xlsx
+from test import scrape_kworb_philippines  # Ensure this function is correctly defined
+from test import get_scraped_date  # Import the function that gets the scraped date
+from test import convert_to_csv, convert_to_xlsx
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("green")

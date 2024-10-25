@@ -7,7 +7,8 @@ import os
 from datetime import datetime
 import zipfile
 import openpyxl
-
+import tkinter as tk
+from tkinter import messagebox
 # Font
 plt.rcParams['font.family'] = 'Liberation Sans'  # Change as necessary
 
@@ -140,6 +141,7 @@ def convert_to_csv(data):
             os.remove(file_path)  # Delete the individual CSV after adding it to the ZIP
 
     print(f"Saved all files in {zip_filename} in Downloads.")
+    messagebox.showinfo("Success", f"{zip_filename} is successfully saved in Downloads")
 
 # Function to convert top 10 data to XLSX, create ZIP, and save in Downloads
 def convert_to_xlsx(data):
@@ -174,7 +176,8 @@ def convert_to_xlsx(data):
             os.remove(xlsx_path)  # Delete the individual XLSX after adding it to the ZIP
 
     print(f"Saved all files in {zip_filename} in Downloads.")
-
+    messagebox.showinfo("Success", f"{zip_filename} is successfully saved in Downloads")
+    
 # Display all relevant data and simultaneous visualizations
 def display_all(data):
     # Full Chart Data

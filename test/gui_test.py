@@ -1,4 +1,3 @@
-# gui_test.py
 import customtkinter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
