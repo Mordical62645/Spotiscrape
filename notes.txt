@@ -23,7 +23,14 @@ Modules/Packages/Libraries used:
 * re
 * scikit-learn
 * numpy
+* tkinter
 * customtkinter
+* cx_Freeze
+* os
+* sys
+* shutil
+* openpyxl
+* datetime
 
 Data Analysis:
 Linear Regression (Simple Predictive Model)
