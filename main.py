@@ -9,7 +9,7 @@ plt.rcParams['font.family'] = 'Liberation Sans'  # Change as necessary
 
 # Clean text by removing non-ASCII characters
 def clean_text(text):
-    return re.sub(r'[^\x20-\x7E]+', '', text)  
+    return text.strip() and re.sub(r'[^\x20-\x7E]+', '', text)  
 
 def scrape_kworb_philippines():
     url = "https://kworb.net/spotify/country/ph_daily.html"
@@ -17,6 +17,20 @@ def scrape_kworb_philippines():
 
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Extract the date from the header or other relevant text
+        date = None
+        
+        # Look for the date in all text elements and match the pattern
+        for element in soup.find_all(string=re.compile(r'\d{4}/\d{2}/\d{2}')):
+            date_match = re.search(r'\d{4}/\d{2}/\d{2}', element)
+            if date_match:
+                date = date_match.group(0)
+                break
+        
+        if not date:
+            date = "Date not found"
+        
         tables = soup.find_all('table')
         if not tables:
             print("No tables found on the page.")
@@ -71,6 +85,7 @@ def scrape_kworb_philippines():
                     print(f"Error processing row: {e}")
                     continue
 
+        print(f"Spotify Daily Chart - Philippines - {date}")  # Display the date
         return pd.DataFrame(songs_data)
     else:
         print("Failed to retrieve the Kworb chart.")
