@@ -2,7 +2,8 @@ import customtkinter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
-import sys
+import os
+import shutil
 from test import scrape_kworb_philippines  # Ensure this function is correctly defined
 
 customtkinter.set_appearance_mode("System")
@@ -11,6 +12,9 @@ customtkinter.set_default_color_theme("green")
 class App(customtkinter.CTk):
     def __init__(self, data):
         super().__init__()
+
+        self.is_refreshing = False
+        self.after_ids = []  # Store after IDs for cancellation
 
         # Configure window
         self.title("SpotiScrape - Spotify Top Charts Philippines")
@@ -34,7 +38,7 @@ class App(customtkinter.CTk):
         self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
         self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_xlsx, text="Convert to XLSX")
         self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
-        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.restart_analysis, text="Restart Analysis")
+        self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.refresh_data, text="Refresh Data")
         self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
 
         # Appearance settings
@@ -63,12 +67,15 @@ class App(customtkinter.CTk):
 
         # Create content for each tab
         self.create_tab_content(self.tabview.tab("Current Week"), data.head(10), "Current Week Data", 'current')
-        self.create_tab_content(self.tabview.tab("Prediction: Next Week"), data.head(10), "Next Week Prediction", 'next')
-        self.create_tab_content(self.tabview.tab("Prediction: Next Month"), data.head(10), "Next Month Prediction", 'month')
+        self.create_tab_content(self.tabview.tab("Prediction: Next Week"), data.head(10).copy(), "Next Week Prediction", 'next')
+        self.create_tab_content(self.tabview.tab("Prediction: Next Month"), data.head(10).copy(), "Next Month Prediction", 'month')
 
         # Set default values
         self.appearance_mode_optionemenu.set("Dark")
         self.scaling_optionemenu.set("100%")
+
+        # Bind the close event
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_tab_content(self, tab, data, initial_text, prediction_type):
         # Create a frame to hold the canvas and textbox
@@ -127,25 +134,44 @@ class App(customtkinter.CTk):
         self.textbox.insert("0.0", formatted_text)
         self.textbox.configure(state="disabled")  # Make it read-only
 
-    def sidebar_button_event(self):
-        print("Sidebar button clicked")
-
     def convert_to_csv(self):
-        # Implement CSV conversion logic here
-        print("Convert to CSV clicked")
+        if not self.is_refreshing:
+            # Implement CSV conversion logic here
+            print("Convert to CSV clicked")
 
     def convert_to_xlsx(self):
-        # Implement XLSX conversion logic here
-        print("Convert to XLSX clicked")
+        if not self.is_refreshing:
+            # Implement XLSX conversion logic here
+            print("Convert to XLSX clicked")
 
-    def restart_analysis(self):
-        # Restart the application
-        print("Restarting analysis...")
-        self.destroy()  # Close the current application window
-        # Restart the application
-        data = scrape_kworb_philippines()  # Fetch new data
-        app = App(data)  # Create a new instance of App
-        app.mainloop()  # Start the new application
+    def refresh_data(self):
+        print("Refreshing data...")
+        self.is_refreshing = True  # Set the flag to indicate a refresh
+        new_data = scrape_kworb_philippines().copy()  # Fetch new data
+        
+        # Update the content of each tab with new data
+        self.update_tab_content(self.tabview.tab("Current Week"), new_data.head(10), "Current Week Data", 'current')
+        self.update_tab_content(self.tabview.tab("Prediction: Next Week"), new_data.head(10).copy(), "Next Week Prediction", 'next')
+        self.update_tab_content(self.tabview.tab("Prediction: Next Month"), new_data.head(10).copy(), "Next Month Prediction", 'month')
+        
+        self.is_refreshing = False  # Reset the flag after refresh
+
+    def update_tab_content(self, tab, data, initial_text, prediction_type):
+        # Clear existing content
+        for widget in tab.winfo_children():
+            widget.destroy()
+
+        self.create_tab_content(tab, data, initial_text, prediction_type)
+
+    def on_closing(self):
+        print("Closing the application...")
+        # Remove __pycache__ directory
+        pycache_dir = os.path.join(os.getcwd(), '__pycache__')
+        if os.path.exists(pycache_dir):
+            shutil.rmtree(pycache_dir)
+            print("__pycache__ directory removed.")
+
+        os._exit(0)  # Forcefully exit the application
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
         customtkinter.set_appearance_mode(new_appearance_mode)
@@ -155,6 +181,6 @@ class App(customtkinter.CTk):
         customtkinter.set_widget_scaling(new_scaling_float)
 
 if __name__ == "__main__":
-    data = scrape_kworb_philippines()
+    data = scrape_kworb_philippines().copy()  # Ensure data is a copy
     app = App(data)
     app.mainloop()
