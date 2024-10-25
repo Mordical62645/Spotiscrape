@@ -1,10 +1,14 @@
+# gui_test.py
 import customtkinter
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import pandas as pd
+import sys
 import os
 import shutil
-from test import scrape_kworb_philippines  # Ensure this function is correctly defined
+from main import scrape_kworb_philippines  # Ensure this function is correctly defined
+from main import get_scraped_date  # Import the function that gets the scraped date
+from main import display_all
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("green")
@@ -30,16 +34,24 @@ class App(customtkinter.CTk):
         self.sidebar_frame = customtkinter.CTkFrame(self, width=140, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, rowspan=2, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(4, weight=1)
+        
         self.logo_label = customtkinter.CTkLabel(self.sidebar_frame, text="SpotiScrape", font=customtkinter.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
 
+        # Get the scraped date from logic.py
+        scraped_date = get_scraped_date()  # Assuming this returns the date as a string
+
+        # Create a label to display the date
+        self.date_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Date: {scraped_date}", font=customtkinter.CTkFont(size=12))
+        self.date_label.grid(row=1, column=0, padx=20, pady=(0, 10))
+
         # Create sidebar buttons
         self.sidebar_button_1 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_csv, text="Convert to CSV")
-        self.sidebar_button_1.grid(row=1, column=0, padx=20, pady=10)
+        self.sidebar_button_1.grid(row=2, column=0, padx=20, pady=10)
         self.sidebar_button_2 = customtkinter.CTkButton(self.sidebar_frame, command=self.convert_to_xlsx, text="Convert to XLSX")
-        self.sidebar_button_2.grid(row=2, column=0, padx=20, pady=10)
+        self.sidebar_button_2.grid(row=3, column=0, padx=20, pady=10)
         self.sidebar_button_3 = customtkinter.CTkButton(self.sidebar_frame, command=self.refresh_data, text="Refresh Data")
-        self.sidebar_button_3.grid(row=3, column=0, padx=20, pady=10)
+        self.sidebar_button_3.grid(row=4, column=0, padx=20, pady=10)
 
         # Appearance settings
         self.appearance_mode_label = customtkinter.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
@@ -127,60 +139,70 @@ class App(customtkinter.CTk):
                 artist_title = artist_title[:char_limit - 3] + "..."  # Keep space for ellipsis
             
             if predicted_streams_column:
-                formatted_text += f"{row['Pos']:<5} {row['P+']:<5} {artist_title:<{char_limit}} {row['Pk']:<5} {row['Streams']:<10} {row['7Day']:<10} {row['Total']:<10} {row['Predicted Streams']:<10.2f}\n"
+                formatted_text += f"{row['Pos']:<5} {row['P+']:<5} {artist_title:<{char_limit}} {row['Pk']:<5} {row['Streams']:<10} {row['7Day']:<10} {row['Total']:<10} {row['Predicted Streams']:<10}\n"
             else:
-                formatted_text += f"{row['Pos']:<5} {row['P+']:<5} {artist_title:<{char_limit}} {row['Pk']:<5} {row['Streams']:<10} {row['7Day']:<10} {row['Total']:<10} {'N/A':<10}\n"
+                formatted_text += f"{row['Pos']:<5} {row['P+']:<5} {artist_title:<{char_limit}} {row['Pk']:<5} {row['Streams']:<10} {row['7Day']:<10} {row['Total']:<10}\n"
 
         self.textbox.insert("0.0", formatted_text)
-        self.textbox.configure(state="disabled")  # Make it read-only
-
-    def convert_to_csv(self):
-        if not self.is_refreshing:
-            # Implement CSV conversion logic here
-            print("Convert to CSV clicked")
-
-    def convert_to_xlsx(self):
-        if not self.is_refreshing:
-            # Implement XLSX conversion logic here
-            print("Convert to XLSX clicked")
+        self.textbox.configure(state="disabled")
 
     def refresh_data(self):
-        print("Refreshing data...")
-        self.is_refreshing = True  # Set the flag to indicate a refresh
-        new_data = scrape_kworb_philippines().copy()  # Fetch new data
+        print("Refresh Data Clicked")
+        # Clear existing after IDs
+        for after_id in self.after_ids:
+            self.after_cancel(after_id)
+        self.after_ids.clear()
+
+        if self.is_refreshing:
+            return  # Already refreshing
+
+        self.is_refreshing = True
+        self.sidebar_button_3.configure(state="disabled")  # Disable the button while refreshing
+
+        # Simulate data refresh
+        self.after_ids.append(self.after(2000, self.update_data))  # Schedule the update after 2 seconds
+
+    def update_data(self):
+        # Logic to update data here
+        new_data, date = scrape_kworb_philippines()  # Unpack the tuple here
+        self.date_label.configure(text=f"Date: {date}")  # Update the date label
+        self.create_tab_content(self.tabview.tab("Current Week"), new_data.head(10), "Current Week Data", 'current')
+        self.create_tab_content(self.tabview.tab("Prediction: Next Week"), new_data.head(10).copy(), "Next Week Prediction", 'next')
+        self.create_tab_content(self.tabview.tab("Prediction: Next Month"), new_data.head(10).copy(), "Next Month Prediction", 'month')
         
-        # Update the content of each tab with new data
-        self.update_tab_content(self.tabview.tab("Current Week"), new_data.head(10), "Current Week Data", 'current')
-        self.update_tab_content(self.tabview.tab("Prediction: Next Week"), new_data.head(10).copy(), "Next Week Prediction", 'next')
-        self.update_tab_content(self.tabview.tab("Prediction: Next Month"), new_data.head(10).copy(), "Next Month Prediction", 'month')
-        
-        self.is_refreshing = False  # Reset the flag after refresh
+        self.is_refreshing = False
+        self.sidebar_button_3.configure(state="normal")  # Re-enable the button
 
-    def update_tab_content(self, tab, data, initial_text, prediction_type):
-        # Clear existing content
-        for widget in tab.winfo_children():
-            widget.destroy()
+    def convert_to_csv(self):
+        print("Convert to CSV Clicked")
 
-        self.create_tab_content(tab, data, initial_text, prediction_type)
+    def convert_to_xlsx(self):
+        print("Convert to XLSX Clicked")
 
-    def on_closing(self):
-        print("Closing the application...")
-        # Remove __pycache__ directory
-        pycache_dir = os.path.join(os.getcwd(), '__pycache__')
-        if os.path.exists(pycache_dir):
-            shutil.rmtree(pycache_dir)
-            print("__pycache__ directory removed.")
-
-        os._exit(0)  # Forcefully exit the application
-
-    def change_appearance_mode_event(self, new_appearance_mode: str):
+    def change_appearance_mode_event(self, new_appearance_mode):
         customtkinter.set_appearance_mode(new_appearance_mode)
 
-    def change_scaling_event(self, new_scaling: str):
-        new_scaling_float = int(new_scaling.replace("%", "")) / 100
-        customtkinter.set_widget_scaling(new_scaling_float)
+    def change_scaling_event(self, new_scaling):
+        customtkinter.set_widget_scaling(float(new_scaling[:-1]) / 100)
+
+    def on_closing(self):
+        # Remove the __pycache__ directory if it exists
+        pycache_path = "__pycache__"
+        if os.path.exists(pycache_path):
+            try:
+                shutil.rmtree(pycache_path)
+                print(f"Removed {pycache_path} directory.")
+            except Exception as e:
+                print(f"Error removing {pycache_path}: {e}")  # Log the error
+
+        sys.exit()  # Exit the program
 
 if __name__ == "__main__":
-    data = scrape_kworb_philippines().copy()  # Ensure data is a copy
-    app = App(data)
-    app.mainloop()
+    data, date = scrape_kworb_philippines()  # Unpack the tuple here
+    
+    if not data.empty:
+        print(f"Extracted Date: {date}")  # Optional: display the date if needed
+        app = App(data)  # Pass the DataFrame to the App
+        app.mainloop()
+    else:
+        print("No data to display.")

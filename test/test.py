@@ -25,25 +25,29 @@ def scrape_kworb_philippines():
             if date_match:
                 date = date_match.group(0)
                 break
-        if not date:
+
+        if date is None:
             date = "Date not found"
+
+        print(f"Extracted Date: {date}")
         
         tables = soup.find_all('table')
         if not tables:
             print("No tables found on the page.")
-            return pd.DataFrame()
+            return pd.DataFrame(), date  # Return empty DataFrame and date
 
         table = tables[0]
         rows = table.find_all('tr')
         if len(rows) < 2:
             print("No chart data found in the table.")
-            return pd.DataFrame()
+            return pd.DataFrame(), date  # Return empty DataFrame and date
 
         songs_data = []
         for row in rows[1:]:
             columns = row.find_all('td')
             if len(columns) >= 11: 
                 try:
+                    # Extract song data
                     pos = columns[0].text.strip() 
                     p_plus = columns[1].text.strip()  
                     artist_and_title = clean_text(columns[2].text.strip()) 
@@ -56,6 +60,7 @@ def scrape_kworb_philippines():
                     seven_day_plus = columns[9].text.strip().replace(',', '')  
                     total = columns[10].text.strip().replace(',', '')  
 
+                    # Convert streams and other numerical data to integers
                     streams = int(streams) if streams.isdigit() else 0
                     streams_plus = int(streams_plus) if streams_plus.replace('-', '').isdigit() else 0
                     seven_day = int(seven_day) if seven_day.isdigit() else 0
@@ -80,11 +85,16 @@ def scrape_kworb_philippines():
                     print(f"Error processing row: {e}")
                     continue
 
-        print(f"Spotify Daily Chart - Philippines - {date}")
-        return pd.DataFrame(songs_data)
+        print(f"Spotify Daily Chart - Philippines - {date}")  # Display date
+        return pd.DataFrame(songs_data), date  # Return DataFrame and date
     else:
         print("Failed to retrieve the Kworb chart.")
-        return pd.DataFrame()
+        return pd.DataFrame(), "Date not found"  # Return empty DataFrame and date
+
+# New function to get the scraped date
+def get_scraped_date():
+    data, date = scrape_kworb_philippines()
+    return date
 
 # Display all relevant data and simultaneous visualizations
 def display_all(data):
@@ -131,7 +141,7 @@ def display_all(data):
     plt.show()  # Show all charts at once
 
 if __name__ == "__main__":
-    data = scrape_kworb_philippines()
+    data, date = scrape_kworb_philippines()  # Now fetching date as well
     
     if not data.empty:
         display_all(data)  # Display all data and simultaneous visualizations

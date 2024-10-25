@@ -9,7 +9,7 @@ plt.rcParams['font.family'] = 'Liberation Sans'  # Change as necessary
 
 # Clean text by removing non-ASCII characters
 def clean_text(text):
-    return text.strip() and re.sub(r'[^\x20-\x7E]+', '', text)  
+    return text.strip() and re.sub(r'[^\x20-\x7E]+', '', text)
 
 def scrape_kworb_philippines():
     url = "https://kworb.net/spotify/country/ph_daily.html"
@@ -20,35 +20,34 @@ def scrape_kworb_philippines():
         
         # Extract the date from the header or other relevant text
         date = None
-        
-        # Look for the date in all text elements and match the pattern
         for element in soup.find_all(string=re.compile(r'\d{4}/\d{2}/\d{2}')):
             date_match = re.search(r'\d{4}/\d{2}/\d{2}', element)
             if date_match:
                 date = date_match.group(0)
                 break
-        
-        if not date:
+
+        if date is None:
             date = "Date not found"
+
+        print(f"Extracted Date: {date}")
         
         tables = soup.find_all('table')
         if not tables:
             print("No tables found on the page.")
-            return pd.DataFrame()
+            return pd.DataFrame(), date  # Return empty DataFrame and date
 
         table = tables[0]
         rows = table.find_all('tr')
-
         if len(rows) < 2:
             print("No chart data found in the table.")
-            return pd.DataFrame()
+            return pd.DataFrame(), date  # Return empty DataFrame and date
 
         songs_data = []
-
         for row in rows[1:]:
             columns = row.find_all('td')
             if len(columns) >= 11: 
                 try:
+                    # Extract song data
                     pos = columns[0].text.strip() 
                     p_plus = columns[1].text.strip()  
                     artist_and_title = clean_text(columns[2].text.strip()) 
@@ -61,6 +60,7 @@ def scrape_kworb_philippines():
                     seven_day_plus = columns[9].text.strip().replace(',', '')  
                     total = columns[10].text.strip().replace(',', '')  
 
+                    # Convert streams and other numerical data to integers
                     streams = int(streams) if streams.isdigit() else 0
                     streams_plus = int(streams_plus) if streams_plus.replace('-', '').isdigit() else 0
                     seven_day = int(seven_day) if seven_day.isdigit() else 0
@@ -85,65 +85,63 @@ def scrape_kworb_philippines():
                     print(f"Error processing row: {e}")
                     continue
 
-        print(f"Spotify Daily Chart - Philippines - {date}")  # Display the date
-        return pd.DataFrame(songs_data)
+        print(f"Spotify Daily Chart - Philippines - {date}")  # Display date
+        return pd.DataFrame(songs_data), date  # Return DataFrame and date
     else:
         print("Failed to retrieve the Kworb chart.")
-        return pd.DataFrame()
+        return pd.DataFrame(), "Date not found"  # Return empty DataFrame and date
 
-# Display the full chart data.
-def display_chart(data):
+# New function to get the scraped date
+def get_scraped_date():
+    data, date = scrape_kworb_philippines()
+    return date
+
+# Display all relevant data and simultaneous visualizations
+def display_all(data):
+    # Full Chart Data
     print("Full Chart Data:")
     print(data)
 
-# Display and visualize the top 10 songs.
-def display_top_10(data):
+    # Top 10 Songs
     top_10 = data.head(10).copy() 
     print("\nTop 10 Songs:")
     print(top_10)
 
-    plt.figure(figsize=(10, 6))
-    plt.barh(top_10['Artist and Title'], top_10['Streams'], color='skyblue')
-    plt.xlabel('Streams')
-    plt.title('Top 10 Songs in the Philippines (Current Week)')
-    plt.gca().invert_yaxis() 
-    plt.show()
-
-# Predict weekly streams for top 10 songs. """
-def predict_weekly(data):
-    top_10 = data.head(10).copy()  
+    # Prediction for Next Week
     top_10['Predicted Streams (Next Week)'] = top_10['Streams'] * 1.10
-
     print("\nPredicted Streams for Top 10 Songs (Next Week):")
     print(top_10[['Artist and Title', 'Predicted Streams (Next Week)']])
 
-    plt.figure(figsize=(10, 6))
+    # Prediction for Next Month
+    top_10['Predicted Streams (Next Month)'] = top_10['Streams'] * (1.10 ** 4)
+    print("\nPredicted Streams for Top 10 Songs (Next Month):")
+    print(top_10[['Artist and Title', 'Predicted Streams (Next Month)']])
+
+    # Visualization for Top 10 Current Week Streams
+    plt.figure()
+    plt.barh(top_10['Artist and Title'], top_10['Streams'], color='skyblue')
+    plt.xlabel('Streams')
+    plt.title('Top 10 Songs in the Philippines (Current Week)')
+    plt.gca().invert_yaxis()
+
+    # Visualization for Predicted Streams Next Week
+    plt.figure()
     plt.barh(top_10['Artist and Title'], top_10['Predicted Streams (Next Week)'], color='lightgreen')
     plt.xlabel('Predicted Streams (Next Week)')
     plt.title('Predicted Streams for Top 10 Songs (Next Week)')
     plt.gca().invert_yaxis()
-    plt.show()
 
-# Predict monthly streams for top 10 songs. """
-def predict_monthly(data):
-    top_10 = data.head(10).copy()  
-    top_10['Predicted Streams (Next Month)'] = top_10['Streams'] * (1.10 ** 4)
-
-    print("\nPredicted Streams for Top 10 Songs (Next Month):")
-    print(top_10[['Artist and Title', 'Predicted Streams (Next Month)']])
-
-    plt.figure(figsize=(10, 6))
+    # Visualization for Predicted Streams Next Month
+    plt.figure()
     plt.barh(top_10['Artist and Title'], top_10['Predicted Streams (Next Month)'], color='salmon')
     plt.xlabel('Predicted Streams (Next Month)')
     plt.title('Predicted Streams for Top 10 Songs (Next Month)')
     plt.gca().invert_yaxis()
-    plt.show()
+
+    plt.show()  # Show all charts at once
 
 if __name__ == "__main__":
-    data = scrape_kworb_philippines()
-
+    data, date = scrape_kworb_philippines()  # Now fetching date as well
+    
     if not data.empty:
-        display_chart(data)  # Display all the chart list
-        display_top_10(data)  # Display top 10 list with visualization
-        predict_weekly(data)  # Predict streams for the next week
-        predict_monthly(data)  # Predict streams for the next month
+        display_all(data)  # Display all data and simultaneous visualizations
