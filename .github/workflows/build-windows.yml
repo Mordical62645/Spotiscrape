@@ -16,9 +16,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install CMake
-        run: choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' --yes
-
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
