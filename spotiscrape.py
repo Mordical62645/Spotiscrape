@@ -41,7 +41,7 @@ class App(customtkinter.CTk):
         scraped_date = get_scraped_date()  # Assuming this returns the date as a string
 
         # Create a label to display the date
-        self.date_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Date: {scraped_date}", font=customtkinter.CTkFont(size=12))
+        self.date_label = customtkinter.CTkLabel(self.sidebar_frame, text=f"Date: {scraped_date}\n\n\nCreators:\nMarco Tecson\nXyril Manrique", font=customtkinter.CTkFont(size=12))
         self.date_label.grid(row=1, column=0, padx=20, pady=(0, 10))
 
         # Create sidebar buttons
