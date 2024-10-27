@@ -1,0 +1,8 @@
+customtkinter
+matplotlib
+pandas
+requests
+beautifulsoup4
+openpyxl
+Pillow
+pyinstaller
