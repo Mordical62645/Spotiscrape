@@ -9,7 +9,10 @@ import zipfile
 import openpyxl
 import tkinter as tk
 from tkinter import messagebox
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/main
 # Font
 plt.rcParams['font.family'] = 'Liberation Sans'  # Change as necessary
 
