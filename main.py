@@ -11,7 +11,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 # Font
-plt.rcParams['font.family'] = 'Liberation Sans'  # Change as necessary
+plt.rcParams['font.family'] = 'Arial'  # Change as necessary
 
 # Clean text by removing non-ASCII characters
 def clean_text(text):

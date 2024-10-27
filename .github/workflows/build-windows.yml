@@ -27,10 +27,10 @@ jobs:
           pip install -r requirements.txt  # Install from requirements file
 
       - name: Build executable with PyInstaller
-        run: pyinstaller --onefile --icon=icon.ico gui.py --hidden-import='PIL._tkinter_finder' # Replace with your icon and script name
+        run: pyinstaller --onefile --icon=icon.ico spotiscrape.py --hidden-import='PIL._tkinter_finder' # Replace with your icon and script name
 
       - name: Upload executable
         uses: actions/upload-artifact@v3  # Updated version
         with:
           name: windows-executable
-          path: dist/gui.exe  # Replace with your actual script name
+          path: dist/spotiscrape.exe  # Replace with your actual script name
