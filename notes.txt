@@ -1,0 +1,53 @@
+Key Features:
+1. Display all the chart list
+2. Display all top 10 list with visualization (matplotlib)
+3. Make a predictive chart for 1 week (top 10) with visualization (matplotlib)
+4. Make a predictive chart for 1 month (top 10) with visualization (matplotlib)
+
+GUI layout:
+1. App title: e.g SpotiScrape + Date
+2. Buttons: Re-Analyze, tabs, Convert to CSV, Convert to XLSX
+3. tabs: 
+    Current Week + Top 10 list, 
+    Prediction: Next Week + Top 10 list, 
+    Prediction: Next Month + Top 10 list
+4. Settings:  
+    Theme modes,
+    UI Scaling
+    
+Modules/Packages/Libraries used:
+* requests
+* bs4 (BeautifulSoup)
+* pandas
+* matplotlib
+* re
+* scikit-learn
+* numpy
+* tkinter
+* customtkinter
+* cx_Freeze
+* os
+* sys
+* shutil
+* openpyxl
+* datetime
+
+Data Analysis:
+Linear Regression (Simple Predictive Model)
+Given that:
+
+* We have historical data (past weekly streams),
+* We believe that song growth is steady and predictable (suggesting a linear trend),
+* We're comfortable with statistical models like regression but prefer simpler techniques 
+  that don't require much computing power.
+
+1. Collect Historical Data: Pull stream numbers from past weeks for each song.
+2. Apply Linear Regression: Use the steps above to fit the model with that data.
+3. Predict Future Streams: Use the model to predict the streams for the next week or month.
+
+Resources:
+https://kworb.net/spotify/country/ph_daily.html
+https://kworb.net/spotify/country/ph_weekly.html
+https://github.com/TomSchimansky/CustomTkinter/blob/master/examples/complex_example.py
+
+
