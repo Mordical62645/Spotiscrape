@@ -25,7 +25,7 @@ Modules/Packages/Libraries used:
 * numpy
 * tkinter
 * customtkinter
-* cx_Freeze
+* zipfile
 * os
 * sys
 * shutil

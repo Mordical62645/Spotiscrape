@@ -1,0 +1,10 @@
+requests
+bs4
+pandas
+matplotlib
+scikit-learn
+numpy
+customtkinter
+openpyxl
+datetime
+pyinstaller
