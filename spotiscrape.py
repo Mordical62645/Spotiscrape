@@ -8,6 +8,7 @@ import shutil
 from main import scrape_kworb_philippines  # Ensure this function is correctly defined
 from main import get_scraped_date  # Import the function that gets the scraped date
 from main import convert_to_csv, convert_to_xlsx
+from main import display_all
 
 customtkinter.set_appearance_mode("System")
 customtkinter.set_default_color_theme("green")
@@ -98,21 +99,18 @@ class App(customtkinter.CTk):
         self.chart_frame.grid(row=0, column=0, padx=20, pady=(10, 20), sticky="nsew")
 
         # Create a Matplotlib figure based on the data
-        fig, ax = plt.subplots()
+        next_week, next_month, fig= display_all(data)
+
         if prediction_type == 'current':
-            ax.barh(data['Artist and Title'], data['Streams'], color='skyblue')
-            ax.set_title('Top 10 Songs in the Philippines (Current Week)')
             predicted_streams_column = False  # No predicted streams in current
         else:
             # Create the predicted streams column for next week and month
             if prediction_type == 'next':
-                data.loc[:, 'Predicted Streams'] = data['Streams'] * 1.10
+                data.loc[:, 'Predicted Streams'] = next_week
             elif prediction_type == 'month':
-                data.loc[:, 'Predicted Streams'] = data['Streams'] * (1.10 ** 4)
+                data.loc[:, 'Predicted Streams'] = next_month
 
-            ax.barh(data['Artist and Title'], data['Predicted Streams'], color='lightgreen' if prediction_type == 'next' else 'salmon')
-            ax.set_title(f'Predicted Streams for Top 10 Songs ({prediction_type})')
-            predicted_streams_column = True  # Predicted streams is now available
+            predicted_streams_column = True  # Predicted streams is now available"""
 
         # Create a FigureCanvasTkAgg to embed the plot in the Tkinter window
         canvas = FigureCanvasTkAgg(fig, master=self.chart_frame)

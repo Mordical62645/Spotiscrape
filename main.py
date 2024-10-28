@@ -9,6 +9,9 @@ import zipfile
 import openpyxl
 import tkinter as tk
 from tkinter import messagebox
+from sklearn.linear_model import LinearRegression
+import numpy as np
+
 
 # Font
 plt.rcParams['font.family'] = 'Arial'  # Change as necessary
@@ -102,6 +105,24 @@ def get_scraped_date():
     data, date = scrape_kworb_philippines()
     return date
 
+def linear_regression_predictions(data, song_index):
+    # Prepare the data for the specific song
+    X = np.arange(len(data)).reshape(-1, 1)  # X is the index of all songs
+    y = data['Streams'].values  # y is the stream values
+
+    model = LinearRegression()
+    model.fit(X, y)
+
+    # Predict for the specific song index for next week and next month
+    next_week_index = song_index + 1  # Predicting for the next week
+    next_month_index = song_index + 4  # Predicting for the next month
+    
+    # Using the model to predict the streams
+    next_week_prediction = model.predict([[next_week_index]])[0]
+    next_month_prediction = model.predict([[next_month_index]])[0]
+    
+    return next_week_prediction, next_month_prediction
+
 # Function to get the Downloads directory path
 def get_downloads_path():
     home = os.path.expanduser("~")
@@ -112,54 +133,31 @@ def generate_filename(prefix):
     current_time = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
     return f"{prefix}SpotiScrape-{current_time}.csv", current_time  # Return the current time for zip filename
 
-# Function to convert top 10 data to CSV, create ZIP, and save in Downloads
-def convert_to_csv(data):
-    downloads_path = get_downloads_path()
-    # Filter the top 10 data for the current week
-    top_10 = data.head(10).copy()
-    # Generate filenames and save current week data
-    cw_filename, current_time = generate_filename("[CW]")
-    data.to_csv(os.path.join(downloads_path, cw_filename), index=False)
-
-    # Predictions for next week and next month
-    top_10['Predicted Streams (Next Week)'] = top_10['Streams'] * 1.10
-    top_10['Predicted Streams (Next Month)'] = top_10['Streams'] * (1.10 ** 4)
-
-    # Save next week and next month data
-    nw_filename, _ = generate_filename("[NW]")
-    top_10[['Artist and Title', 'Predicted Streams (Next Week)']].to_csv(os.path.join(downloads_path, nw_filename), index=False)
-    
-    nm_filename, _ = generate_filename("[NM]")
-    top_10[['Artist and Title', 'Predicted Streams (Next Month)']].to_csv(os.path.join(downloads_path, nm_filename), index=False)
-
-    # Create a ZIP file
-    zip_filename = f"SpotiScrape-{current_time}.zip"
-    with zipfile.ZipFile(os.path.join(downloads_path, zip_filename), 'w') as zipf:
-        # Write each CSV to the ZIP and then delete
-        for filename in [cw_filename, nw_filename, nm_filename]:
-            file_path = os.path.join(downloads_path, filename)
-            zipf.write(file_path, arcname=filename)
-            os.remove(file_path)  # Delete the individual CSV after adding it to the ZIP
-
-    print(f"Saved all files in {zip_filename} in Downloads.")
-    messagebox.showinfo("Success", f"{zip_filename} is successfully saved in Downloads")
-
-# Function to convert top 10 data to XLSX, create ZIP, and save in Downloads
 def convert_to_xlsx(data):
     downloads_path = get_downloads_path()
+
     # Filter the top 10 data for the current week
     top_10 = data.head(10).copy()
 
     # Generate filenames and save current week data to XLSX
     cw_filename, current_time = generate_filename("[CW]")
     cw_xlsx_path = os.path.join(downloads_path, cw_filename.replace(".csv", ".xlsx"))
-    data.to_excel(cw_xlsx_path, index=False)
+    top_10.to_excel(cw_xlsx_path, index=False)  # Save top_10, not data
 
-    # Predictions for next week and next month
-    top_10['Predicted Streams (Next Week)'] = top_10['Streams'] * 1.10
-    top_10['Predicted Streams (Next Month)'] = top_10['Streams'] * (1.10 ** 4)
+    # Predictions for next week and next month for each song in top_10
+    predictions_next_week = []
+    predictions_next_month = []
 
-    # Save next week and next month data to XLSX
+    for i in range(len(top_10)):
+        next_week_prediction, next_month_prediction = linear_regression_predictions(data, i)
+        predictions_next_week.append(next_week_prediction)
+        predictions_next_month.append(next_month_prediction)
+
+    # Add predictions to the top_10 DataFrame
+    top_10['Predicted Streams (Next Week)'] = predictions_next_week
+    top_10['Predicted Streams (Next Month)'] = predictions_next_month
+
+    # Save predictions to XLSX
     nw_filename, _ = generate_filename("[NW]")
     nw_xlsx_path = os.path.join(downloads_path, nw_filename.replace(".csv", ".xlsx"))
     top_10[['Artist and Title', 'Predicted Streams (Next Week)']].to_excel(nw_xlsx_path, index=False)
@@ -171,64 +169,106 @@ def convert_to_xlsx(data):
     # Create a ZIP file
     zip_filename = f"SpotiScrape-{current_time}.zip"
     with zipfile.ZipFile(os.path.join(downloads_path, zip_filename), 'w') as zipf:
-        # Write each XLSX to the ZIP and then delete
         for xlsx_path in [cw_xlsx_path, nw_xlsx_path, nm_xlsx_path]:
             zipf.write(xlsx_path, arcname=os.path.basename(xlsx_path))
-            os.remove(xlsx_path)  # Delete the individual XLSX after adding it to the ZIP
+            os.remove(xlsx_path)
+
+    print(f"Saved all files in {zip_filename} in Downloads.")
+    messagebox.showinfo("Success", f"{zip_filename} is successfully saved in Downloads")
+
+def convert_to_csv(data):
+    downloads_path = get_downloads_path()
+
+    # Filter the top 10 data for the current week
+    top_10 = data.head(10).copy()
+
+    # Generate filenames and save current week data to CSV
+    cw_filename, current_time = generate_filename("[CW]")
+    cw_csv_path = os.path.join(downloads_path, cw_filename)
+    top_10.to_csv(cw_csv_path, index=False)
+
+    # Predictions for next week and next month for each song in top_10
+    predictions_next_week = []
+    predictions_next_month = []
+
+    for i in range(len(top_10)):
+        next_week_prediction, next_month_prediction = linear_regression_predictions(data, i)
+        predictions_next_week.append(next_week_prediction)
+        predictions_next_month.append(next_month_prediction)
+
+    # Add predictions to the top_10 DataFrame
+    top_10['Predicted Streams (Next Week)'] = predictions_next_week
+    top_10['Predicted Streams (Next Month)'] = predictions_next_month
+
+    # Save predictions to CSV
+    nw_filename, _ = generate_filename("[NW]")
+    nw_csv_path = os.path.join(downloads_path, nw_filename)
+    top_10[['Artist and Title', 'Predicted Streams (Next Week)']].to_csv(nw_csv_path, index=False)
+
+    nm_filename, _ = generate_filename("[NM]")
+    nm_csv_path = os.path.join(downloads_path, nm_filename)
+    top_10[['Artist and Title', 'Predicted Streams (Next Month)']].to_csv(nm_csv_path, index=False)
+
+    # Create a ZIP file
+    zip_filename = f"SpotiScrape-{current_time}.zip"
+    with zipfile.ZipFile(os.path.join(downloads_path, zip_filename), 'w') as zipf:
+        for filename in [cw_filename, nw_filename, nm_filename]:
+            file_path = os.path.join(downloads_path, filename)
+            zipf.write(file_path, arcname=filename)
+            os.remove(file_path)
 
     print(f"Saved all files in {zip_filename} in Downloads.")
     messagebox.showinfo("Success", f"{zip_filename} is successfully saved in Downloads")
     
-# Display all relevant data and simultaneous visualizations
 def display_all(data):
-    # Full Chart Data
-    print("Full Chart Data:")
-    print(data)
-
     # Top 10 Songs
-    top_10 = data.head(10).copy() 
+    top_10 = data.head(10).copy()
     print("\nTop 10 Songs (Current Week):")
     print(top_10)
 
-    # Prediction for Next Week
-    top_10['Predicted Streams (Next Week)'] = top_10['Streams'] * 1.10
-    
-    # Prediction for Next Month
-    top_10['Predicted Streams (Next Month)'] = top_10['Streams'] * (1.10 ** 4)
-    
-    # Print predictions for Next Week and Next Month
-    print("\nTop 10 Songs (Predicted Streams for Next Week):")
+    # Get predictions for next week and next month for each song in top_10
+    top_10['Predicted Streams (Next Week)'] = top_10.index.map(lambda x: linear_regression_predictions(data, x)[0])
+    top_10['Predicted Streams (Next Month)'] = top_10.index.map(lambda x: linear_regression_predictions(data, x)[1])
+
+    print("\nTop 10 Songs (Next Week):")
     print(top_10[['Artist and Title', 'Predicted Streams (Next Week)']])
 
-    print("\nTop 10 Songs (Predicted Streams for Next Month):")
+    print("\nTop 10 Songs (Next Month):")
     print(top_10[['Artist and Title', 'Predicted Streams (Next Month)']])
 
-    # Visualization for Top 10 Current Week Streams
-    plt.figure()
-    plt.barh(top_10['Artist and Title'], top_10['Streams'], color='skyblue')
-    plt.xlabel('Streams')
-    plt.title('Top 10 Songs in the Philippines (Current Week)')
-    plt.gca().invert_yaxis()
+    # Line Chart for Streams (Current, Next Week, Next Month)
+    fig, ax = plt.subplots(figsize=(6, 3))
+    
+    # Jitter offset for x-axis to avoid overlapping
+    jitter = np.linspace(-0.1, 0.1, len(top_10))  # Small unique offset for each song
 
-    # Visualization for Predicted Streams Next Week
-    plt.figure()
-    plt.barh(top_10['Artist and Title'], top_10['Predicted Streams (Next Week)'], color='lightgreen')
-    plt.xlabel('Predicted Streams (Next Week)')
-    plt.title('Predicted Streams for Top 10 Songs (Next Week)')
-    plt.gca().invert_yaxis()
+    for i, (_, row) in enumerate(top_10.iterrows()):
+        x = [0 + jitter[i], 1 + jitter[i], 2 + jitter[i]]  # Slightly offset x-axis positions
+        y = [row['Streams'], row['Predicted Streams (Next Week)'], row['Predicted Streams (Next Month)']]
+        ax.plot(x, y, marker='o', label=row['Artist and Title'])
+    
+    ax.set_xticks([0, 1, 2])  # Explicit x-tick positions
+    ax.set_xticklabels(['Current Week', 'Next Week', 'Next Month'])
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Streams')
+    ax.set_title('Current and Predicted Streams for Top 10 Songs')
+    ax.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
+    ax.grid(True)
 
-    # Visualization for Predicted Streams Next Month
-    plt.figure()
-    plt.barh(top_10['Artist and Title'], top_10['Predicted Streams (Next Month)'], color='salmon')
-    plt.xlabel('Predicted Streams (Next Month)')
-    plt.title('Predicted Streams for Top 10 Songs (Next Month)')
-    plt.gca().invert_yaxis()
+    # Adjust y-axis limits if values are very close
+    all_streams = top_10[['Streams', 'Predicted Streams (Next Week)', 'Predicted Streams (Next Month)']].values.flatten()
+    ax.set_ylim([min(all_streams) * 0.9, max(all_streams) * 1.1])
 
-    plt.show()  # Show all charts at once
+    plt.tight_layout()
+
+    # plt.show()
+    return top_10['Predicted Streams (Next Week)'], top_10['Predicted Streams (Next Month)'] ,fig
 
 if __name__ == "__main__":
     data, date = scrape_kworb_philippines()  # Now fetching date as well
     
     if not data.empty:
-        convert_to_xlsx(data) # test
         display_all(data)  # Display all data and simultaneous visualizations
+        convert_to_xlsx(data) # test
+        convert_to_csv(data) # test
+
