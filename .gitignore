@@ -2,3 +2,5 @@
 /SpotiScrape_WINDOWS_1.0.0_setup.exe
 /SpotiScrape_WINDOWS_1.0.1_setup.exe
 /.venv
+/build
+/dist
