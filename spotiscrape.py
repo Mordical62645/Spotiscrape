@@ -22,7 +22,7 @@ class App(customtkinter.CTk):
 
         # Configure window
         self.title("SpotiScrape - Spotify Top Charts Philippines")
-        self.geometry("1100x580")
+        self.geometry("900x580")
         self.resizable(False, False)
 
         # Configure grid layout
