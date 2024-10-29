@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "SpotiScrape"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Marco Antonio Tecson"
 #define MyAppURL "https://github.com/Mordical62645"
 #define MyAppExeName "spotiscrape.exe"
@@ -32,7 +32,7 @@ LicenseFile=C:\Users\ptecs\OneDrive\Documents\COLLEGE\3RD YEAR\1ST SEMESTER\SUBJ
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\ptecs\OneDrive\Documents\COLLEGE\3RD YEAR\1ST SEMESTER\SUBJECTS\CY1\PC14\ACTIVITIES\OCTOBER\October 23, 2024\Spotiscrape
-OutputBaseFilename=SpotiScrape_WINDOWS_1.0.0_setup
+OutputBaseFilename=SpotiScrape_WINDOWS_1.0.1_setup
 SetupIconFile=C:\Users\ptecs\Downloads\Windows_Installer_icon.ico
 Compression=lzma
 SolidCompression=yes

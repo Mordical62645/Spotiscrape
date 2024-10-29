@@ -127,7 +127,7 @@ class App(customtkinter.CTk):
         # Format the data for the textbox
         formatted_text = initial_text + "\n\n"
         formatted_text += f"{'Pos':<5} {'P+':<5} {'Artist and Title':<{char_limit}} {'Pk':<5} {'Streams':<10} {'7Day':<10} {'Total':<10} {'Predicted':<10}\n"
-        formatted_text += "-" * 80 + "\n"
+        formatted_text += "-" * 100 + "\n"
 
         for index, row in data.iterrows():
             artist_title = row['Artist and Title']
