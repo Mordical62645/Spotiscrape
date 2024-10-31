@@ -237,7 +237,7 @@ def display_all(data):
     print(top_10[['Artist and Title', 'Predicted Streams (Next Month)']])
 
     # Line Chart for Streams (Current, Next Week, Next Month)
-    fig, ax = plt.subplots(figsize=(6, 3))
+    fig, ax = plt.subplots(figsize=(7, 3))
     
     # Jitter offset for x-axis to avoid overlapping
     jitter = np.linspace(-0.1, 0.1, len(top_10))  # Small unique offset for each song

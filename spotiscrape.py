@@ -22,7 +22,7 @@ class App(customtkinter.CTk):
 
         # Configure window
         self.title("SpotiScrape - Spotify Top Charts Philippines")
-        self.geometry("900x580")
+        self.geometry("1000x650")
         self.resizable(False, False)
 
         # Configure grid layout
@@ -122,12 +122,12 @@ class App(customtkinter.CTk):
         self.textbox.grid(row=1, column=0, padx=(0, 5), pady=(0, 0), sticky="nsew")
 
         # Set character limit
-        char_limit = 30
+        char_limit = 45
 
         # Format the data for the textbox
         formatted_text = initial_text + "\n\n"
         formatted_text += f"{'Pos':<5} {'P+':<5} {'Artist and Title':<{char_limit}} {'Pk':<5} {'Streams':<10} {'7Day':<10} {'Total':<10} {'Predicted':<10}\n"
-        formatted_text += "-" * 100 + "\n"
+        formatted_text += "-" * 115 + "\n"
 
         for index, row in data.iterrows():
             artist_title = row['Artist and Title']
