@@ -1,9 +1,9 @@
+/.venv
+/build
+/dist
 /.gitignore
 /SpotiScrape_WINDOWS_1.0.0_setup.exe
 /SpotiScrape_WINDOWS_1.0.1_setup.exe
 /SpotiScrape_WINDOWS_1.0.2_setup.exe
 /SpotiScrape-Documentation_PC14-SOFTENG-PROJECT.docx
 /SpotiScrape-Documentation_PC14-SOFTENG-PROJECT.pdf
-/.venv
-/build
-/dist
